@@ -9,11 +9,16 @@ int speed = 0;
 void setup() {
   Serial.begin(9600);
   pinMode(pot, INPUT);
-  
+    
   esc.attach(10);
   esc.writeMicroseconds(2000);
+  Serial.println("Liga a bateria.");
   delay(2000);
-  esc.writeMicroseconds(1000);
+  Serial.println("Ok"); // se ok 2 beeps
+  Serial.println("Espera");
+  delay(1);
+  esc.writeMicroseconds(1000); // long beep se ok
+  Serial.println("Ok");
   delay(300);
 }
 
