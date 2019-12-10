@@ -20,7 +20,7 @@ void setup() {
   Ethernet.begin(mac, ip);
   server.begin();
 
-  
+
 }
 void loop() {
 
@@ -62,7 +62,7 @@ void loop() {
             }
             spdEsc = map(spd, 0, 100, 1000, 2000);
             esc.writeMicroseconds(spdEsc);
-            
+
             Serial.println("spd -");
             Serial.println(spdEsc);
 
