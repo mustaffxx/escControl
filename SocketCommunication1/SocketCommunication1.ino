@@ -8,8 +8,8 @@ SoftwareSerial Serial1(6, 7);
 WiFiEspServer server(80);
 WebSocketServer webSocketServer;
 
-const char* ssid = "2.4G_ClaroVirtua 150";
-const char* password =  "18001600";
+const char* ssid = "XXXX";
+const char* password =  "YYYY";
 
 void setup() {
 
