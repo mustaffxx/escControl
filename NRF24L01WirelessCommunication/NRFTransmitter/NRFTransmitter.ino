@@ -30,13 +30,6 @@ void loop() {
   Serial.println(spd);
 }
 
-/*
-  const char text[] = "Hello World";
-  radio.write(&text, sizeof(text));
-  delay(1000);
-*/
-
-
 void sendData() {
   radio.write(&spd, sizeof(spd));
   delay(100);

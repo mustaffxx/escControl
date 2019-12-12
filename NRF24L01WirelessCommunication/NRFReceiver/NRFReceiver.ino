@@ -6,7 +6,7 @@
 RF24 radio(9, 10); // CE, CSN
 const byte address[6] = "node1";
 
-// faixa velocidade 200~300
+//
 int received = 0;
 int spd = 1000;
 int spdAnterior = 1000;
@@ -16,7 +16,7 @@ Servo esc;
 
 void setup() {
   esc.attach(5);
-
+  delay(300);
   Serial.begin(9600);
   radio.begin();
   radio.setPALevel(RF24_PA_MIN);
