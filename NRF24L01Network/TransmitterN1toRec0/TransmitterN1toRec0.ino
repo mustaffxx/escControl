@@ -1,5 +1,5 @@
 #include <SPI.h>
-#include <nRF24L01.h>
+//#include <nRF24L01.h>
 #include <RF24.h>
 #include <Wire.h>
 #include "RTClib.h"
@@ -10,16 +10,7 @@ RF24 radio(6, 11); // CE, CSN
 const byte address[6] = "node1";
 
 //
-struct date {
-  uint8_t id;
-  uint8_t day;
-  uint8_t month;
-  uint16_t year;
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-};
-date dtsend;
+char sent[32];
 
 void setup() {
   Serial.begin(9600);
@@ -37,27 +28,26 @@ void setup() {
 }
 
 void loop() {
-  DateTime now = rtc.now();
-  dtsend.id = 0001;
-  dtsend.day = (uint8_t)now.day();
-  dtsend.month = (uint8_t)now.month();
-  dtsend.year = (uint16_t)now.year();
-  dtsend.hour = (uint8_t)now.hour();
-  dtsend.minute = (uint8_t)now.minute();
-  dtsend.second = (uint8_t)now.second();
-
-  radio.write(&dtsend, sizeof(dtsend));
-  Serial.print("Sent: ID:");
-  Serial.print(dtsend.id);
-  Serial.print(" - ");
-  Serial.print(dtsend.day);
-  Serial.print(dtsend.month);
-  Serial.print(dtsend.year);
-  Serial.print(" - ");
-  Serial.print(dtsend.hour);
-  Serial.print(":");
-  Serial.print(dtsend.minute);
-  Serial.print(":");
-  Serial.println(dtsend.second);
+  String datetime = getDateTime();
+  datetime.toCharArray(sent, 32);
+   
+  radio.write(&sent, sizeof(sent));
+  Serial.print("Sent: ");
+  Serial.print(sent);
+  Serial.print(" Size: ");
+  Serial.println(sizeof(sent));
   delay(1000);
+}
+
+String getDateTime() {
+  DateTime now = rtc.now();
+  String id = "ABCDE";
+  String days = (String)now.day();
+  String months = (String)now.month();
+  String years = (String)now.year();
+  String hours = (String)now.hour();
+  String minutes = (String)now.minute();
+  String seconds = (String)now.second();
+  String code = id + years + months + days + hours + minutes + seconds;
+  return code;
 }

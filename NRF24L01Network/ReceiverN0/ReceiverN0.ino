@@ -1,21 +1,12 @@
 #include <SPI.h>
-#include <nRF24L01.h>
+//#include <nRF24L01.h>
 #include <RF24.h>
 
 RF24 radio(6, 11); // CE, CSN
 const byte address[6] = "node1";
 
 //
-struct date {
-  uint8_t id;
-  uint8_t day;
-  uint8_t month;
-  uint16_t year;
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-};
-date dtreceived;
+char received[32];
 
 void setup() {
   Serial.begin(9600);
@@ -29,18 +20,10 @@ void setup() {
 }
 void loop() {
   if (radio.available()) {
-    radio.read(&dtreceived, sizeof(dtreceived));
-    Serial.print("Received: ID:");
-    Serial.print(dtreceived.id);
-    Serial.print(" - ");
-    Serial.print(dtreceived.day);
-    Serial.print(dtreceived.month);
-    Serial.print(dtreceived.year);
-    Serial.print(" - ");
-    Serial.print(dtreceived.hour);
-    Serial.print(":");
-    Serial.print(dtreceived.minute);
-    Serial.print(":");
-    Serial.println(dtreceived.second);
+    radio.read(&received, sizeof(received));
+    Serial.print("Received: ID: ");
+    Serial.print(received);
+    Serial.print(" Size: ");
+  Serial.println(sizeof(received));
   }
 }
