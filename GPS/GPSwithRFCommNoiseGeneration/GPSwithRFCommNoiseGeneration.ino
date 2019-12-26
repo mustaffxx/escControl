@@ -1,5 +1,4 @@
 #include <SPI.h>
-//#include <nRF24L01.h>
 #include <RF24.h>
 
 RF24 radio(6, 11); // CE, CSN
@@ -29,7 +28,7 @@ void loop() {
   strcpy(sent.id, "CBA21");
 
   radio.write(&sent, sizeof(sent));
-  Serial.print("Sent: {\n  ID: ");
+  Serial.print("\nSent: {\n  ID: ");
   Serial.print(String(sent.id));
   Serial.print("\n  lat: ");
   Serial.print(sent.lat, 6);

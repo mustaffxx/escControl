@@ -1,5 +1,4 @@
 #include <SPI.h>
-//#include <nRF24L01.h>
 #include <RF24.h>
 
 RF24 radio(6, 11); // CE, CSN
@@ -27,7 +26,7 @@ void setup() {
 void loop() {
   if (radio.available()) {
     radio.read(&received, sizeof(received));
-    Serial.print("Received: {\n  ID: ");
+    Serial.print("\nReceived: {\n  ID: ");
     Serial.print(String(received.id));
     Serial.print("\n  lat: ");
     Serial.print(received.lat, 6);
