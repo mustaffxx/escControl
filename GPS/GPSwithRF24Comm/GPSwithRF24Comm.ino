@@ -1,18 +1,18 @@
 #include <TimeLib.h>
 #include <TinyGPS++.h>
-#include <SoftwareSerial.h>
 #include <U8glib.h>
 #include <SPI.h>
 #include <RF24.h>
 
 //Pinos utilizados para conexao do modulo GY-NEO6MV2
-static const int RXPin = 9, TXPin = 10;
+//static const int RXPin = 9, TXPin = 10;
 
 //Objeto TinyGPS++
 TinyGPSPlus gps;
 
 //Conexao serial do modulo GPS
-SoftwareSerial Serial_GPS(RXPin, TXPin);
+//SoftwareSerial Serial_GPS(RXPin, TXPin);
+//Serial1 Serial_GPS;
 
 //Definicoes do display Oled
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_FAST);
@@ -40,7 +40,8 @@ void setup()
   //Baud rate Arduino
   Serial.begin(115200);
   //Baud rate Modulo GPS
-  Serial_GPS.begin(9600);
+  //Serial_GPS.begin(9600);
+  Serial1.begin(9600);
 
   pinMode(5, OUTPUT);
   pinMode(A0, OUTPUT);
@@ -74,23 +75,27 @@ void setup()
 
 void loop()
 {
-  while (Serial_GPS.available() > 0)
-    if (gps.encode(Serial_GPS.read())) {
+  while (Serial1.available() > 0) {
+    if (gps.encode(Serial1.read())) {
       digitalWrite(5, HIGH);
       getInfo();
-      radio.write(&sent, sizeof(sent));
-      Serial.print("\nSent: {\n  ID: ");
-      Serial.print(String(sent.id));
-      Serial.print("\n  lat: ");
-      Serial.print(sent.lat, 6);
-      Serial.print("\n  lng: ");
-      Serial.print(sent.lng, 6);
-      Serial.print("\n  alt: ");
-      Serial.print(sent.alt, 6);
-      Serial.print("\n }");
-      Serial.print("\nSize: ");
-      Serial.println(sizeof(sent));
     }
+  }
+
+  //
+  radio.write(&sent, sizeof(sent));
+  Serial.print("\nSent: {\n  ID: ");
+  Serial.print(String(sent.id));
+  Serial.print("\n  lat: ");
+  Serial.print(sent.lat, 6);
+  Serial.print("\n  lng: ");
+  Serial.print(sent.lng, 6);
+  Serial.print("\n  alt: ");
+  Serial.print(sent.alt, 6);
+  Serial.print("\n }");
+  Serial.print("\nSize: ");
+  Serial.println(sizeof(sent));
+
 
   //Chama a rotina de desenho na tela
   u8g.firstPage();
@@ -104,14 +109,14 @@ void loop()
   analogWrite(A0, 0);
   analogWrite(A1, 0);
   analogWrite(A2, 0);
-  //delay(1);
+  delay(600);
 
 }
 
 void getInfo()
 {
   if (gps.location.isValid())
-  //if (true)
+    //if (true)
   {
     sent.lat = gps.location.lat();
     sent.lng = gps.location.lng();
@@ -124,7 +129,7 @@ void getInfo()
     //Serial.println(sent.alt);
   }
   else {}
-
+  /*
   if (gps.satellites.value() == 0) {
     analogWrite(A0, 255);
     analogWrite(A1, 255);
@@ -165,14 +170,14 @@ void getInfo()
       analogWrite(A2, 255);
       delay(50);
     }
-  }
+  } */
 }
 
 void GPS_Timezone_Adjust()
 {
-  while (Serial_GPS.available())
+  while (Serial1.available())
   {
-    if (gps.encode(Serial_GPS.read()))
+    if (gps.encode(Serial1.read()))
     {
       int Year = gps.date.year();
       byte Month = gps.date.month();
