@@ -27,7 +27,6 @@ long diffTime;
 int sensorthreshold = 30;
 
 void setup() {
-  Serial.begin(9600);
   pinMode(pinSensor, INPUT);
 
   //radio
@@ -63,7 +62,6 @@ void loop() {
       // print to serial at every interval - defined at the variables declaration
       if (currentMillis - prevMillis > interval) { // see if now already an interval long
         prevMillis = currentMillis;
-        Serial.print(rps); Serial.print(" rps  "); Serial.print(rpm); Serial.println(" rpm");
       }
 
       prevTime = currentTime;
@@ -71,15 +69,8 @@ void loop() {
     state2 = state1;
   }
 
-  /*
-    //only for testing to determine the sensorthreshold value
-    delay(500);
-    Serial.println(sensorvalue);
-  */
   if (millis() > time_now + period) {
     time_now = millis();
-    Serial.print(" RPM: ");
-    Serial.println(rpm);
     radio.write(&rpm , sizeof(rpm));
   }
 }
