@@ -12,9 +12,7 @@ bool failSafe;
 bool lostFrame;
 
 //
-bool arm = 0;
-int arm2 = 0;
-bool btst = LOW;
+bool arm = LOW;
 
 //// SWITCH ////
 
@@ -33,6 +31,7 @@ unsigned long buttonPressDuration;                  // Time the button is presse
 
 unsigned long currentMillis;
 unsigned long lastMillis;
+
 
 void setup() {
   // begin the SBUS communication
@@ -56,86 +55,20 @@ void setup() {
 }
 
 void loop() {
-  // look for a good SBUS packet from the receiver
-  //if (x8r.read(&channels[0], &failSafe, &lostFrame)) {
-  //}
   currentMillis = millis();    // store the current time
-  readButtonState();
-  //armDisarmMotor();
-  armDisarmMotor2();
-  //buttonPressed();
-  // write the SBUS packet to an SBUS compatible servo
-  x8r.write(&channels[0]);
 
-  //print();
-  if ((arm2 == 0) || (arm2 == 2)) {
-    Serial.println("Neut");
-  } else if (arm2 == 1) {
-    Serial.println("Arm");
-  } else if (arm2 == 3) {
-    Serial.println("Disarm");
-  } else {}
-  delay(10);
-}
-
-void buttonPressed() {
-  if (digitalRead(armButton) == HIGH) {
-    btst = !btst;
-    if ((btst == 1) && (digitalRead(armButton))) {
-      channels[2] = 173;
-      channels[3] = 1812;
-    } else if ((btst == 0) && (digitalRead(armButton))) {
-      channels[2] = 173;
-      channels[3] = 173;
-    } else {
-      channels[2] = 173;
-      channels[3] = 998;
-    }
+  // look for a good SBUS packet from the receiver
+  if (x8r.read(&channels[0], &failSafe, &lostFrame)) {
+    x8r.write(&channels[0]);
+    readButtonState();
   } else {
-    channels[2] = 173;
-    channels[3] = 998;
+    readButtonState();
   }
+  print();
 }
 
 
-void armDisarmMotor() {
-  //if ((arm == 1) && (digitalRead(armButton)) && (channels[2] <= 200) && (channels[3] >= 800) ) {
-  if ((arm == 1) && (digitalRead(armButton))) {
-    channels[2] = 173;
-    channels[3] = 1812;
-
-    //} else if ((arm == 0) && (digitalRead(armButton)) && (channels[2] <= 200) && (channels[3] <= 1100) ) {
-  } else if ((arm == 0) && (digitalRead(armButton))) {
-    channels[2] = 173;
-    channels[3] = 173;
-  } else {
-    channels[2] = 173;
-    channels[3] = 998;
-  }
-}
-
-void armDisarmMotor2() {
-  //if ((arm == 1) && (digitalRead(armButton)) && (channels[2] <= 200) && (channels[3] >= 800) ) {
-  if (arm2 == 1) {
-    channels[2] = 173;
-    channels[3] = 1812;
-
-    //} else if ((arm == 0) && (digitalRead(armButton)) && (channels[2] <= 200) && (channels[3] <= 1100) ) {
-  } else if ((arm2 == 0) || (arm2 == 2)) {
-    channels[2] = 173;
-    channels[3] = 998;
-  } else if (arm2 == 3) {
-    channels[2] = 173;
-    channels[3] = 173;
-  } else {
-    channels[2] = 173;
-    channels[3] = 998;
-  }
-}
-
-
-void readButtonState() {
-
+int readButtonState() {
   // If the difference in time between the previous reading is larger than intervalButton
   if (currentMillis - previousButtonMillis > intervalButton) {
 
@@ -160,9 +93,6 @@ void readButtonState() {
     if (buttonState == HIGH && !buttonStateLongPress && buttonPressDuration >= minButtonLongPressDuration) {
       buttonStateLongPress = true;
       //Serial.println("Button long pressed");
-      //Serial.print("arm: ");
-      //Serial.println(arm);
-      //arm = !arm;
     }
 
     // If the button is released AND
@@ -176,21 +106,38 @@ void readButtonState() {
       // If the time the button has been pressed is smaller than the minimal time needed for a long press
       if (!buttonStateLongPress && buttonPressDuration < minButtonLongPressDuration) {
         //Serial.println("Button pressed shortly");
-        arm2++;
-        if (arm2 > 3) {
-          arm2 = 0;
+        if (arm == LOW) {
+          Serial.println("Arming...");
+          unsigned long timeArm = millis();
+          while ((millis() - timeArm) < 5000) {
+            channels[2] = 173;
+            channels[3] = 1812;
+            x8r.write(&channels[0]);
+            delay(10);
+          }
+          arm = HIGH;
+          Serial.println("Armed!\n");
+        } else if (arm == HIGH) {
+          Serial.println("Disarming...");
+          unsigned long timeArm = millis();
+          while ((millis() - timeArm) < 5000) {
+            channels[2] = 173;
+            channels[3] = 173;
+            x8r.write(&channels[0]);
+            delay(10);
+          }
+          arm = LOW;
+          Serial.println("Disarmed!\n");
         }
+        // return
+        channels[2] = 173;
+        channels[3] = 998;
       }
     }
-
     // store the current timestamp in previousButtonMillis
     previousButtonMillis = currentMillis;
-
   }
-
 }
-
-
 
 void print() {
   for (int i = 0; i < 8; i++) {
