@@ -107,7 +107,7 @@ void comm_receive() {
           {
             // E.g. read GCS heartbeat and go into
             // comm lost mode if timer times out
-            Serial.println("PX HB");
+            Serial.println("\nPX HB");
           }
           break;
         case MAVLINK_MSG_ID_SYS_STATUS:  // #1: SYS_STATUS
@@ -166,11 +166,34 @@ void comm_receive() {
             */
             mavlink_attitude_t attitude;
             mavlink_msg_attitude_decode(&msg, &attitude);
-            Serial.println("PX ATTITUDE");
+            Serial.println("\nPX ATTITUDE");
             Serial.println(attitude.roll);
             //if (attitude.roll > 1) leds_modo = 0;
             //else if (attitude.roll < -1) leds_modo = 2;
             //else leds_modo = 1;
+          }
+          break;
+
+        case MAVLINK_MSG_ID_GPS_RAW_INT:
+          {
+            mavlink_gps_raw_int_t packet;
+            mavlink_msg_gps_raw_int_decode(&msg, &packet);
+
+            Serial.print("\nGPS Fix: "); Serial.println(packet.fix_type);
+            Serial.print("GPS Latitude: "); Serial.println(packet.lat);
+            Serial.print("GPS Longitude: "); Serial.println(packet.lon);
+            Serial.print("GPS Speed: "); Serial.println(packet.vel);
+            Serial.print("Sats Visible: "); Serial.println(packet.satellites_visible);
+
+          }
+          break;
+
+        case MAVLINK_MSG_ID_MISSION_CURRENT:
+          {
+            mavlink_mission_current_t mission;
+            mavlink_msg_mission_current_decode(&msg, &mission);
+
+            Serial.print("\nCurrent Mission Seq: "); Serial.println(mission.seq);
           }
           break;
 
