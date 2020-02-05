@@ -26,7 +26,7 @@ void loop() {
   MavLink_receive();
   if (Serial.available()) {
     char c = Serial.read();
-    Serial.println(c);
+    //Serial.println(c);
 
     if (c == 'a') {
       Serial.println("\nArming!");
@@ -56,6 +56,7 @@ void MavLink_receive()
       //Handle new message from autopilot
       switch (msg.msgid)
       {
+
         case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
           {
             mavlink_gps_raw_int_t packet;
@@ -85,9 +86,7 @@ void MavLink_receive()
 
         case MAVLINK_MSG_ID_ATTITUDE:  // 30
           {
-            /* Message decoding: PRIMITIVE
-                  mavlink_msg_attitude_decode(const mavlink_message_t* msg, mavlink_attitude_t* attitude)
-            */
+
             mavlink_attitude_t packet;
             mavlink_msg_attitude_decode(&msg, &packet);
             Serial.println("\n\n--MAVLINK_MSG_ID_ATTITUDE--");
@@ -157,7 +156,47 @@ void MavLink_receive()
             Serial.print("base_mode: "); Serial.println(packet.base_mode);
             Serial.print("system_status: "); Serial.println(packet.system_status);
             Serial.print("mavlink_version: "); Serial.println(packet.mavlink_version);
+          }
 
+        case MAVLINK_MSG_ID_COMMAND_ACK: // 77
+          {
+            mavlink_command_ack_t packet;
+            mavlink_msg_command_ack_decode(&msg, &packet);
+            Serial.println("\n\n--MAVLINK_MSG_ID_COMMAND_ACK--");
+            switch (packet.result) {
+              case 0:
+                {
+                  Serial.print("Result: MAV_RESULT_ACCEPTED ");
+                }
+                break;
+              case 1:
+                {
+                  Serial.print("Result: MAV_RESULT_TEMPORARILY_REJECTED ");
+                }
+                break;
+              case 2:
+                {
+                  Serial.print("Result: MAV_RESULT_DENIED ");
+                }
+                break;
+              case 3:
+                {
+                  Serial.print("Result: MAV_RESULT_UNSUPPORTED ");
+                }
+                break;
+              case 4:
+                {
+                  Serial.print("Result: MAV_RESULT_FAILED ");
+                }
+                break;
+              case 5:
+                {
+                  Serial.print("Result: MAV_RESULT_IN_PROGRESS ");
+                }
+                break;
+              default:
+                break;
+            }
           }
           break;
 
