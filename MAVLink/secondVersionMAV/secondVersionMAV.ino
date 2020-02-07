@@ -17,13 +17,12 @@ void setup() {
   _MavLinkSerial.begin(57600);
   Serial.begin(57600);
 
-  request_datastream();
+  requestDatastream();
 
 }
 
 void loop() {
-
-  MavLink_receive();
+  readMavlink();
   if (Serial.available()) {
     char c = Serial.read();
     //Serial.println(c);
@@ -36,11 +35,10 @@ void loop() {
       disarm();
     }
   }
-
 }
 
 //function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
-void MavLink_receive()
+void readMavlink()
 {
   mavlink_message_t msg;
   mavlink_status_t status;
@@ -90,8 +88,8 @@ void MavLink_receive()
             mavlink_attitude_t packet;
             mavlink_msg_attitude_decode(&msg, &packet);
             Serial.println("\n\n--MAVLINK_MSG_ID_ATTITUDE--");
-            Serial.print("ATTITUDE: ");
-            Serial.println(packet.roll);
+            Serial.print("Pitch: "); Serial.print(packet.pitch);
+            Serial.print(" Roll: "); Serial.println(packet.roll);
           }
           break;
 
@@ -162,7 +160,7 @@ void MavLink_receive()
           {
             mavlink_command_ack_t packet;
             mavlink_msg_command_ack_decode(&msg, &packet);
-            Serial.println("\n\n--MAVLINK_MSG_ID_COMMAND_ACK--");
+            Serial.println("--MAVLINK_MSG_ID_COMMAND_ACK--");
             switch (packet.result) {
               case 0:
                 {
@@ -212,10 +210,28 @@ void MavLink_receive()
   }
 }
 
-void request_datastream() {
+void requestDatastream() {
   //Request Data from Pixhawk
-  uint8_t _req_stream_id = MAV_DATA_STREAM_RAW_SENSORS;
-  uint16_t _req_message_rate = 0x01; //number of times per second to request the data in hex
+  const int maxStreams = 7;
+
+  uint8_t _req_stream_id[maxStreams] = {
+    MAV_DATA_STREAM_RAW_SENSORS,
+    MAV_DATA_STREAM_EXTENDED_STATUS,
+    MAV_DATA_STREAM_RC_CHANNELS,
+    MAV_DATA_STREAM_POSITION,
+    MAV_DATA_STREAM_EXTRA1,
+    MAV_DATA_STREAM_EXTRA2,
+    MAV_DATA_STREAM_RAW_CONTROLLER
+  };
+  uint16_t _req_message_rate[maxStreams] = {
+    0x02,
+    0x02,
+    0x05,
+    0x02,
+    0x05,
+    0x02,
+    0x02
+  }; //number of times per second to request the data in hex
   uint8_t _start_stop = 1; //1 = start, 0 = stop
 
   // STREAMS that can be requested
@@ -239,18 +255,20 @@ void request_datastream() {
     - Gyro info (IMU_SCALED) in MAV_DATA_STREAM_EXTRA1
   */
 
-  // Initialize the required buffers
-  mavlink_message_t msg;
-  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+  for (int i = 0; i < maxStreams; i++) {
+    // Initialize the required buffers
+    mavlink_message_t msg;
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
-  // Pack the message
-  mavlink_msg_request_data_stream_pack(_system_id, _component_id, &msg, _target_system, _target_component, _req_stream_id, _req_message_rate, _start_stop);
-  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);  // Send the message (.write sends as bytes)
+    // Pack the message
+    mavlink_msg_request_data_stream_pack(_system_id, _component_id, &msg, _target_system, _target_component, _req_stream_id[i], _req_message_rate[i], _start_stop);
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);  // Send the message (.write sends as bytes)
 
-  _MavLinkSerial.write(buf, len); //Write data to serial port
+    _MavLinkSerial.write(buf, len); //Write data to serial port
+  }
 }
 
-void Command_long() {
+void sendCommandLong() {
 
   // Define the system type (see mavlink_types.h for list of possible types)
 
@@ -268,13 +286,15 @@ void Command_long() {
   // Send the message (.write sends as bytes)
   _MavLinkSerial.write(buf, len);
 }
+
 void arm() {
   CMD_LONG_param1 = 1;
   CMD_LONG_command = MAV_CMD_COMPONENT_ARM_DISARM;
-  Command_long();
+  sendCommandLong();
 }
+
 void disarm() {
   CMD_LONG_param1 = 0;
   CMD_LONG_command = MAV_CMD_COMPONENT_ARM_DISARM;
-  Command_long();
+  sendCommandLong();
 }
