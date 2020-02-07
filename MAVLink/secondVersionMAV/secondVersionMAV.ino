@@ -13,6 +13,17 @@ uint16_t CMD_LONG_command;
 uint8_t  CMD_LONG_confirmation;
 float CMD_LONG_param1 = 0;
 
+// mavlink structs
+mavlink_gps_raw_int_t gps;
+//mavlink_hil_controls_t hil;
+mavlink_attitude_t attitude;
+mavlink_rc_channels_raw_t channels;
+mavlink_vfr_hud_t vrf;
+mavlink_sys_status_t sys_status;
+
+// motor
+bool motor_armed = LOW;
+
 void setup() {
   _MavLinkSerial.begin(57600);
   Serial.begin(57600);
@@ -23,6 +34,7 @@ void setup() {
 
 void loop() {
   readMavlink();
+  printInfo();
   if (Serial.available()) {
     char c = Serial.read();
     //Serial.println(c);
@@ -57,21 +69,14 @@ void readMavlink()
 
         case MAVLINK_MSG_ID_GPS_RAW_INT: // 24
           {
-            mavlink_gps_raw_int_t packet;
-            mavlink_msg_gps_raw_int_decode(&msg, &packet);
-            Serial.println("\n\n--MAVLINK_MSG_ID_GPS_RAW_INT--");
-            Serial.print("GPS Fix: "); Serial.println(packet.fix_type);
-            Serial.print("GPS Latitude: "); Serial.println(packet.lat);
-            Serial.print("GPS Longitude: "); Serial.println(packet.lon);
-            Serial.print("GPS Speed: "); Serial.println(packet.vel);
-            Serial.print("Sats Visible: "); Serial.println(packet.satellites_visible);
+            mavlink_msg_gps_raw_int_decode(&msg, &gps);
           }
           break;
 
-        case MAVLINK_MSG_ID_HIL_CONTROLS: // 91
+        /*
+          case MAVLINK_MSG_ID_HIL_CONTROLS: // 91
           {
-            mavlink_hil_controls_t packet;
-            mavlink_msg_hil_controls_decode(&msg, &packet);
+            mavlink_msg_hil_controls_decode(&msg, &hil);
             Serial.println("\n\n--MAVLINK_MSG_ID_HIL_CONTROLS--");
             Serial.print("Roll: "); Serial.println(packet.roll_ailerons);
             Serial.print("Pitch: "); Serial.println(packet.pitch_elevator);
@@ -81,35 +86,28 @@ void readMavlink()
             Serial.print("Nav mode: "); Serial.println(packet.nav_mode);
           }
           break;
+        */
 
         case MAVLINK_MSG_ID_ATTITUDE:  // 30
           {
+            mavlink_msg_attitude_decode(&msg, &attitude);
+          }
+          break;
 
-            mavlink_attitude_t packet;
-            mavlink_msg_attitude_decode(&msg, &packet);
-            Serial.println("\n\n--MAVLINK_MSG_ID_ATTITUDE--");
-            Serial.print("Pitch: "); Serial.print(packet.pitch);
-            Serial.print(" Roll: "); Serial.println(packet.roll);
+        case MAVLINK_MSG_ID_SYS_STATUS:
+          {
+            mavlink_msg_sys_status_decode(&msg, &sys_status);
           }
           break;
 
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW: // 35
           {
-            mavlink_rc_channels_raw_t packet;
-            mavlink_msg_rc_channels_raw_decode(&msg, &packet);
-            Serial.println("\n\n--MAVLINK_MSG_ID_RC_CHANNELS_RAW--");
-            Serial.print("Channel 1: "); Serial.println(packet.chan1_raw);
-            Serial.print("Channel 2: "); Serial.println(packet.chan2_raw);
-            Serial.print("Channel 3: "); Serial.println(packet.chan3_raw);
-            Serial.print("Channel 4: "); Serial.println(packet.chan4_raw);
-            Serial.print("Channel 5: "); Serial.println(packet.chan5_raw);
-            Serial.print("Channel 6: "); Serial.println(packet.chan6_raw);
-            Serial.print("Channel 7: "); Serial.println(packet.chan7_raw);
-            Serial.print("Channel 8: "); Serial.println(packet.chan8_raw);
+            mavlink_msg_rc_channels_raw_decode(&msg, &channels);
           }
           break;
 
-        case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT: // 62
+        /*
+          case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT: // 62
           {
             mavlink_nav_controller_output_t packet;
             mavlink_msg_nav_controller_output_decode(&msg, &packet);
@@ -125,7 +123,7 @@ void readMavlink()
           }
           break;
 
-        case MAVLINK_MSG_ID_RAW_IMU: // 27
+          case MAVLINK_MSG_ID_RAW_IMU: // 27
           {
             mavlink_raw_imu_t packet;
             mavlink_msg_raw_imu_decode(&msg, &packet);
@@ -142,19 +140,28 @@ void readMavlink()
             Serial.print("zmag: "); Serial.println(packet.zmag);
           }
           break;
+        */
 
         case MAVLINK_MSG_ID_HEARTBEAT: // 27
           {
             mavlink_heartbeat_t packet;
             mavlink_msg_heartbeat_decode(&msg, &packet);
-            Serial.println("\n\n--MAVLINK_MSG_ID_HEARTBEAT--");
-            Serial.print("custom_mode: "); Serial.println(packet.custom_mode);
-            Serial.print("type: "); Serial.println(packet.type);
-            Serial.print("autopilot: "); Serial.println(packet.autopilot);
-            Serial.print("base_mode: "); Serial.println(packet.base_mode);
-            Serial.print("system_status: "); Serial.println(packet.system_status);
-            Serial.print("mavlink_version: "); Serial.println(packet.mavlink_version);
+            /*
+              Serial.println("\n\n--MAVLINK_MSG_ID_HEARTBEAT--");
+              Serial.print("custom_mode: "); Serial.println(packet.custom_mode);
+              Serial.print("type: "); Serial.println(packet.type);
+              Serial.print("autopilot: "); Serial.println(packet.autopilot);
+              Serial.print("base_mode: "); Serial.println(packet.base_mode);
+              Serial.print("system_status: "); Serial.println(packet.system_status);
+              Serial.print("mavlink_version: "); Serial.println(packet.mavlink_version);
+            */
           }
+
+        case MAVLINK_MSG_ID_VFR_HUD: // 74
+          {
+            mavlink_msg_vfr_hud_decode(&msg, &vrf);
+          }
+          break;
 
         case MAVLINK_MSG_ID_COMMAND_ACK: // 77
           {
@@ -199,11 +206,13 @@ void readMavlink()
           break;
 
         default:
-          Serial.print("\n[ID: ");
-          Serial.print(msg.msgid);
-          //Serial.print("], [seq: ");
-          //Serial.print(msg.seq);
-          Serial.print("]");
+          /*
+            Serial.print("\n[ID: ");
+            Serial.print(msg.msgid);
+            //Serial.print("], [seq: ");
+            //Serial.print(msg.seq);
+            Serial.print("]");
+          */
           break;
       }
     }
@@ -297,4 +306,17 @@ void disarm() {
   CMD_LONG_param1 = 0;
   CMD_LONG_command = MAV_CMD_COMPONENT_ARM_DISARM;
   sendCommandLong();
+}
+
+void printInfo() {
+  Serial.println("------------------------------------------------------------");
+  Serial.print("RC CHANNELS\tAltitude\tGroundSpeed\tAirSpeed\tPitch\t\tRoll\n");
+  Serial.print(channels.chan1_raw); Serial.print("\t\t"); Serial.print(vrf.alt); Serial.print("\t\t"); Serial.print(vrf.groundspeed); Serial.print("\t\t"); Serial.print(vrf.airspeed); Serial.print("\t\t"); Serial.print(attitude.pitch); Serial.print("\t\t"); Serial.println(attitude.roll);
+  Serial.print(channels.chan2_raw); Serial.print("\t\tGPS LAT\t\tGPS LON\t\tGPS FIX\t\tSAT VISIBLE\n");
+  Serial.print(channels.chan3_raw); Serial.print("\t\t"); Serial.print(gps.lat); Serial.print("\t\t"); Serial.print(gps.lon); Serial.print("\t\t"); Serial.print(gps.fix_type); Serial.print("\t\t"); Serial.println(gps.satellites_visible);
+  Serial.print(channels.chan4_raw); Serial.print("\t\tBattery Voltage\tCurrent\t\tBattery Remaining\n");
+  Serial.print(channels.chan5_raw); Serial.print("\t\t"); Serial.print(sys_status.voltage_battery); Serial.print("\t\t"); Serial.print(sys_status.current_battery); Serial.print("\t\t"); Serial.println(sys_status.battery_remaining);
+  Serial.print(channels.chan6_raw); Serial.print(""); Serial.print(""); Serial.println("");
+  Serial.print(channels.chan7_raw); Serial.print(""); Serial.print(""); Serial.println("");
+  Serial.print(channels.chan8_raw); Serial.print(""); Serial.print(""); Serial.println("");
 }
