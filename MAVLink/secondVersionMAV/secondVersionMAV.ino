@@ -309,14 +309,12 @@ void disarm() {
 }
 
 void printInfo() {
-  Serial.println("------------------------------------------------------------");
-  Serial.print("RC CHANNELS\tAltitude\tGroundSpeed\tAirSpeed\tPitch\t\tRoll\n");
-  Serial.print(channels.chan1_raw); Serial.print("\t\t"); Serial.print(vrf.alt); Serial.print("\t\t"); Serial.print(vrf.groundspeed); Serial.print("\t\t"); Serial.print(vrf.airspeed); Serial.print("\t\t"); Serial.print(attitude.pitch); Serial.print("\t\t"); Serial.println(attitude.roll);
-  Serial.print(channels.chan2_raw); Serial.print("\t\tGPS LAT\t\tGPS LON\t\tGPS FIX\t\tSAT VISIBLE\n");
-  Serial.print(channels.chan3_raw); Serial.print("\t\t"); Serial.print(gps.lat); Serial.print("\t\t"); Serial.print(gps.lon); Serial.print("\t\t"); Serial.print(gps.fix_type); Serial.print("\t\t"); Serial.println(gps.satellites_visible);
-  Serial.print(channels.chan4_raw); Serial.print("\t\tBattery Voltage\tCurrent\t\tBattery Remaining\n");
-  Serial.print(channels.chan5_raw); Serial.print("\t\t"); Serial.print(sys_status.voltage_battery); Serial.print("\t\t"); Serial.print(sys_status.current_battery); Serial.print("\t\t"); Serial.println(sys_status.battery_remaining);
-  Serial.print(channels.chan6_raw); Serial.print(""); Serial.print(""); Serial.println("");
-  Serial.print(channels.chan7_raw); Serial.print(""); Serial.print(""); Serial.println("");
-  Serial.print(channels.chan8_raw); Serial.print(""); Serial.print(""); Serial.println("");
+  String sChannels = String(channels.chan1_raw) + "," + String(channels.chan2_raw) + "," + String(channels.chan3_raw) + "," + String(channels.chan4_raw) + "," + String(channels.chan5_raw) + "," + String(channels.chan6_raw) + "," + String(channels.chan7_raw) + "," + String(channels.chan8_raw) + ";";
+  String sVrf = String(vrf.alt) + "," + String(vrf.groundspeed) + "," + String(vrf.airspeed) + ";";
+  String sAtti = String(attitude.pitch) + "," + String(attitude.roll) + ";";
+  String sGps = String(gps.lat * 0.0000001, 10) + "," + String(gps.lon * 0.0000001, 10) + "," + String(gps.fix_type) + "," + String(gps.satellites_visible) + ";";
+  String sSys = String(sys_status.voltage_battery) + "," + String(sys_status.current_battery) + "," + String(sys_status.battery_remaining) + ";";
+  String all = sChannels + sVrf + sAtti + sGps + sSys + "\n";
+  Serial.print(all);
+  delay(5);
 }
