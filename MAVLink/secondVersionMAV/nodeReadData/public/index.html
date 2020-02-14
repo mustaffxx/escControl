@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAVLINK read data</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <table class="blueTable">
+        <thead>
+        <tr>
+        <th>RC CHANNELS</th>
+        <th>Altitude</th>
+        <th>Ground Speed</th>
+        <th>Air Speed</th>
+        <th>Pitch</th>
+        <th>Roll </th>
+        <th>GPS LAT</th>
+        <th>GPS LON</th>
+        <th>GPS FIX</th>
+        <th>SAT VISIBLE</th>
+        <th>Battery Voltage</th>
+        <th>Current</th>
+        <th>Battery Remaining</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td id="rc1">cell1_1</td>
+        <td id="alt">cell2_1</td>
+        <td id="gndspd">cell3_1</td>
+        <td id="airspd">cell4_1</td>
+        <td id="pitch">cell5_1</td>
+        <td id="roll">cell6_1</td>
+        <td id="gpslat">cell7_1</td>
+        <td id="gpslon">cell8_1</td>
+        <td id="gpsfix">cell9_1</td>
+        <td id="gpsat">cell10_1</td>
+        <td id="sysvol">cell11_1</td>
+        <td id="syscur">cell12_1</td>
+        <td id="sysbat">cell13_1</td>
+        </tr>
+        <tr>
+        <td id="rc2">cell1_2</td>
+        </tr>
+        <tr>
+        <td id="rc3">cell1_3</td>
+        </tr>
+        <tr>
+        <td id="rc4">cell1_4</td>
+        </tr>
+        <tr>
+        <td id="rc5">cell1_5</td>
+        </tr>
+        <tr>
+        <td id="rc6">cell1_6</td>
+        </tr>
+        <tr>
+        <td id="rc7">cell1_7</td>
+        </tr>
+        <tr>
+        <td id="rc8">cell1_8</td>
+        </tr>
+        </tbody>
+        </table>
+
+    <script type="text/javascript">
+        var socket = io()
+        socket.on('dataArduino', (data) => {
+            //console.log(data);
+            channels = ['rc1', 'rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7', 'rc8']
+            for(i = 0; i <= 7; i++){
+                document.getElementById(channels[i]).innerHTML = data.channels[i]
+            }
+            //vrf
+            document.getElementById('alt').innerHTML = data.vrf[0]
+            document.getElementById('airspd').innerHTML = data.vrf[1]
+            document.getElementById('gndspd').innerHTML = data.vrf[2]
+            //attitude
+            document.getElementById('pitch').innerHTML = data.attitude[0]
+            document.getElementById('roll').innerHTML = data.attitude[1]
+            //gps
+            document.getElementById('gpslat').innerHTML = data.gps[0]
+            document.getElementById('gpslon').innerHTML = data.gps[1]
+            document.getElementById('gpsfix').innerHTML = data.gps[2]
+            document.getElementById('gpsat').innerHTML = data.gps[3]
+            //sys
+            document.getElementById('sysvol').innerHTML = data.sys[0]
+            document.getElementById('syscur').innerHTML = data.sys[1]
+            document.getElementById('sysbat').innerHTML = data.sys[2]
+        })
+    </script>
+</body>
+<style>
+table.blueTable {
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.blueTable td, table.blueTable th {
+  padding: 3px 5px;
+}
+table.blueTable tbody td {
+  font-size: 16px;
+}
+table.blueTable thead {
+  background: #F2FDFF;
+  background: -moz-linear-gradient(top, #f5fdff 0%, #f3fdff 66%, #F2FDFF 100%);
+  background: -webkit-linear-gradient(top, #f5fdff 0%, #f3fdff 66%, #F2FDFF 100%);
+  background: linear-gradient(to bottom, #f5fdff 0%, #f3fdff 66%, #F2FDFF 100%);
+  border-bottom: 2px solid #444444;
+}
+table.blueTable thead th {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+  text-align: center;
+  border-left: 2px solid #D0E4F5;
+}
+table.blueTable thead th:first-child {
+  border-left: none;
+}
+</style>
+</html>
