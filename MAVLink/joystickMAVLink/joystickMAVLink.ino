@@ -9,9 +9,9 @@ uint8_t _target_system = 1; // Id # of Pixhawk (should be 1)
 uint8_t _target_component = 0; // Target component, 0 = all (seems to work with 0 or 1
 
 /* for future
-uint16_t CMD_LONG_command;
-uint8_t  CMD_LONG_confirmation;
-float CMD_LONG_param1 = 0;
+  uint16_t CMD_LONG_command;
+  uint8_t  CMD_LONG_confirmation;
+  float CMD_LONG_param1 = 0;
 */
 
 // mavlink structs
@@ -31,6 +31,9 @@ mavlink_sys_status_t sys_status;
 #define xRight A2
 #define yRight A3
 
+// middleware check if channels varied
+int oldChannels[4] = {0, 0, 0, 0};
+
 void setup() {
   _MavLinkSerial.begin(57600);
   Serial.begin(57600);
@@ -40,7 +43,7 @@ void setup() {
 
 void loop() {
   /* for future
-  if (Serial.available()) {
+    if (Serial.available()) {
     char c = Serial.read();
     //Serial.println(c);
 
@@ -51,12 +54,12 @@ void loop() {
       Serial.println("\nDisarming!");
       disarm();
     }
-  }
+    }
   */
   readJoystick();
   readMavlink();
-  printInfo();
-  delay(14);
+  //printInfo();
+  delay(1);
 }
 
 //function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
@@ -288,7 +291,7 @@ void requestDatastream() {
 }
 
 /* for future
-void sendCommandLong() {
+  void sendCommandLong() {
 
   // Define the system type (see mavlink_types.h for list of possible types)
 
@@ -305,19 +308,19 @@ void sendCommandLong() {
 
   // Send the message (.write sends as bytes)
   _MavLinkSerial.write(buf, len);
-}
+  }
 
-void arm() {
+  void arm() {
   CMD_LONG_param1 = 1;
   CMD_LONG_command = MAV_CMD_COMPONENT_ARM_DISARM;
   sendCommandLong();
-}
+  }
 
-void disarm() {
+  void disarm() {
   CMD_LONG_param1 = 0;
   CMD_LONG_command = MAV_CMD_COMPONENT_ARM_DISARM;
   sendCommandLong();
-}
+  }
 */
 
 void printInfo() {
@@ -329,14 +332,60 @@ void printInfo() {
   String sSys = String(sys_status.voltage_battery) + "," + String(sys_status.current_battery) + "," + String(sys_status.battery_remaining) + ";";
   all = sChannels + sVrf + sAtti + sGps + sSys + "\n";
   Serial.print(all);
+  all = "";
+  sChannels = "";
+  sVrf = "";
+  sAtti = "";
+  sGps = "";
+  sSys = "";
+}
+
+// check if channels changed with a threshold of 10
+void rcMiddleware(int xl, int yl, int xr, int yr) {
+  int threshold = 5;
+  int channels[4] = {xl, yl, xr, yr};
+  for (int i = 0; i < 4; i++) {
+    if (abs((channels[i] - oldChannels[i])) > threshold) {
+      if (i == 0) {
+        mav_override_rc(oldChannels[2], oldChannels[3], channels[0], oldChannels[1]);
+      }
+      else if (i == 1) {
+        mav_override_rc(oldChannels[2], oldChannels[3], oldChannels[0], channels[1]);
+      }
+      else if (i == 2) {
+        mav_override_rc(channels[2], oldChannels[3], oldChannels[0], oldChannels[1]);
+      }
+      else if (i == 3) {
+        mav_override_rc(oldChannels[2], channels[3], oldChannels[0], oldChannels[1]);
+      }
+      else {};
+      //mav_override_rc(channels[2], channels[3], channels[0], channels[1]);
+      oldChannels[i] = channels[i];
+    }
+  }
 }
 
 void readJoystick() {
-  int xl, yl, xr, yr;
-  xl = map(analogRead(xLeft), 0, 1023, 1000, 2000);
-  yl = map(analogRead(yLeft), 0, 1023, 1000, 2000);
-  xr = map(analogRead(xRight), 0, 1023, 1000, 2000);
-  yr = map(analogRead(yRight), 0, 1023, 1000, 2000);
+  unsigned long xl = 0;
+  unsigned long yl = 0;
+  unsigned long xr = 0;
+  unsigned long yr = 0;
+
+  for (int i = 0; i < 100; i++) {
+    xl = xl + map(analogRead(xLeft), 0, 1023, 1000, 2000);
+    yl = yl + map(analogRead(yLeft), 0, 1023, 1000, 2000);
+    xr = xr + map(analogRead(xRight), 0, 1023, 1000, 2000);
+    yr = yr + map(analogRead(yRight), 0, 1023, 1000, 2000);
+  }
+  xl = xl / 100;
+  yl = yl / 100;
+  xr = xr / 100;
+  yr = yr / 100;
+
+  rcMiddleware(xl, yl, xr, yr);
+
+  Serial.print("\nNew: "); Serial.print(xl); Serial.print(", "); Serial.print(yl); Serial.print(", "); Serial.print(xr); Serial.print(", "); Serial.print(yr); Serial.print("\n");
+  Serial.print("Old: "); Serial.print(oldChannels[0]); Serial.print(", "); Serial.print(oldChannels[1]); Serial.print(", "); Serial.print(oldChannels[2]); Serial.print(", "); Serial.print(oldChannels[3]); Serial.print("\n");
 
   /*
     channels[3] = yl;
@@ -344,7 +393,6 @@ void readJoystick() {
     channels[1] = yr;
     channels[0] = xr;
   */
-  mav_override_rc(xr, yr, xl, yl);
 
   //
   //Serial.print("Left: "); Serial.print(xl); Serial.print("\t-\t"); Serial.print(yl);
