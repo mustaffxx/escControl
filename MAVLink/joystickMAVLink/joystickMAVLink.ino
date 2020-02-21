@@ -15,12 +15,16 @@ uint8_t _target_component = 0; // Target component, 0 = all (seems to work with 
 */
 
 // mavlink structs
+mavlink_heartbeat_t heart;
+bool hbmotor_armed = 0; // heartbeat aux
+String hbstatus = ""; // heartbeat aux
 mavlink_gps_raw_int_t gps;
 //mavlink_hil_controls_t hil;
 mavlink_attitude_t attitude;
 mavlink_rc_channels_raw_t channels;
 mavlink_vfr_hud_t vrf;
 mavlink_sys_status_t sys_status;
+mavlink_statustext_t statustext;
 
 // motor
 //bool motor_armed = LOW;
@@ -58,7 +62,7 @@ void loop() {
   */
   readJoystick();
   readMavlink();
-  //printInfo();
+  printInfo();
   delay(1);
 }
 
@@ -157,17 +161,28 @@ void readMavlink()
 
         case MAVLINK_MSG_ID_HEARTBEAT: // 27
           {
-            mavlink_heartbeat_t packet;
-            mavlink_msg_heartbeat_decode(&msg, &packet);
-            /*
-              Serial.println("\n\n--MAVLINK_MSG_ID_HEARTBEAT--");
-              Serial.print("custom_mode: "); Serial.println(packet.custom_mode);
-              Serial.print("type: "); Serial.println(packet.type);
-              Serial.print("autopilot: "); Serial.println(packet.autopilot);
-              Serial.print("base_mode: "); Serial.println(packet.base_mode);
-              Serial.print("system_status: "); Serial.println(packet.system_status);
-              Serial.print("mavlink_version: "); Serial.println(packet.mavlink_version);
-            */
+
+            mavlink_msg_heartbeat_decode(&msg, &heart);
+            if (bitRead(heart.base_mode, 7)) {
+              hbmotor_armed = 1;
+            } else {
+              hbmotor_armed = 0;
+            }
+
+            if (heart.system_status == 1) {
+              hbstatus = "Booting up,";
+            } else if (heart.system_status == 2) {
+              hbstatus = "Calibrating,";
+            } else if (heart.system_status == 3) {
+              hbstatus = "Standby,";
+            } else if (heart.system_status == 4) {
+              hbstatus = "Active,";
+            } else {
+              hbstatus = "Other,";
+            }
+            //Serial.println(motor_armed);
+            //Serial.println(system_status);
+
           }
 
         case MAVLINK_MSG_ID_VFR_HUD: // 74
@@ -215,6 +230,15 @@ void readMavlink()
               default:
                 break;
             }
+          }
+          break;
+
+        case MAVLINK_MSG_ID_STATUSTEXT: // 253
+          {
+            mavlink_msg_statustext_decode(&msg, &statustext);
+            //String txt = "";
+            //txt = String(statustext.text);
+            //Serial.println(txt);
           }
           break;
 
@@ -330,7 +354,7 @@ void printInfo() {
   String sAtti = String(attitude.pitch) + "," + String(attitude.roll) + ";";
   String sGps = String(gps.lat * 0.0000001, 10) + "," + String(gps.lon * 0.0000001, 10) + "," + String(gps.fix_type) + "," + String(gps.satellites_visible) + ";";
   String sSys = String(sys_status.voltage_battery) + "," + String(sys_status.current_battery) + "," + String(sys_status.battery_remaining) + ";";
-  all = sChannels + sVrf + sAtti + sGps + sSys + "\n";
+  all = sChannels + sVrf + sAtti + sGps + sSys + hbstatus + String(hbmotor_armed) + ";" + statustext.text + "\n";
   Serial.print(all);
   all = "";
   sChannels = "";
@@ -338,6 +362,7 @@ void printInfo() {
   sAtti = "";
   sGps = "";
   sSys = "";
+
 }
 
 // check if channels changed with a threshold of 10
@@ -384,8 +409,8 @@ void readJoystick() {
 
   rcMiddleware(xl, yl, xr, yr);
 
-  Serial.print("\nNew: "); Serial.print(xl); Serial.print(", "); Serial.print(yl); Serial.print(", "); Serial.print(xr); Serial.print(", "); Serial.print(yr); Serial.print("\n");
-  Serial.print("Old: "); Serial.print(oldChannels[0]); Serial.print(", "); Serial.print(oldChannels[1]); Serial.print(", "); Serial.print(oldChannels[2]); Serial.print(", "); Serial.print(oldChannels[3]); Serial.print("\n");
+  //Serial.print("\nNew: "); Serial.print(xl); Serial.print(", "); Serial.print(yl); Serial.print(", "); Serial.print(xr); Serial.print(", "); Serial.print(yr); Serial.print("\n");
+  //Serial.print("Old: "); Serial.print(oldChannels[0]); Serial.print(", "); Serial.print(oldChannels[1]); Serial.print(", "); Serial.print(oldChannels[2]); Serial.print(", "); Serial.print(oldChannels[3]); Serial.print("\n");
 
   /*
     channels[3] = yl;
