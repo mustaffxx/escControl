@@ -10,57 +10,66 @@
     <table class="blueTable">
         <thead>
         <tr>
+        <th>Messages</th>
         <th>RC CHANNELS</th>
-        <th>Altitude</th>
-        <th>Ground Speed</th>
-        <th>Air Speed</th>
-        <th>Pitch</th>
-        <th>Roll </th>
+        <th>Altitude (m)</th>
+        <th>Ground Speed (m/s)</th>
+        <th>Air Speed (m/s)</th>
+        <th>Pitch (rad)</th>
+        <th>Roll (rad)</th>
         <th>GPS LAT</th>
         <th>GPS LON</th>
         <th>GPS FIX</th>
         <th>SAT VISIBLE</th>
-        <th>Battery Voltage</th>
-        <th>Current</th>
+        <th>Battery Voltage (V)</th>
+        <th>Current (A)</th>
         <th>Battery Remaining</th>
         </tr>
         </thead>
         <tbody>
         <tr>
-        <td id="rc1">cell1_1</td>
-        <td id="alt">cell2_1</td>
-        <td id="gndspd">cell3_1</td>
-        <td id="airspd">cell4_1</td>
-        <td id="pitch">cell5_1</td>
-        <td id="roll">cell6_1</td>
-        <td id="gpslat">cell7_1</td>
-        <td id="gpslon">cell8_1</td>
-        <td id="gpsfix">cell9_1</td>
-        <td id="gpsat">cell10_1</td>
-        <td id="sysvol">cell11_1</td>
-        <td id="syscur">cell12_1</td>
-        <td id="sysbat">cell13_1</td>
+        <td id="systatus" style="border-bottom: 1px #000000 solid;">empty</td>
+        <td id="rc1">0</td>
+        <td id="alt">0</td>
+        <td id="gndspd">0</td>
+        <td id="airspd">0</td>
+        <td id="pitch">0</td>
+        <td id="roll">0</td>
+        <td id="gpslat">0</td>
+        <td id="gpslon">0</td>
+        <td id="gpsfix">0</td>
+        <td id="gpsat">0</td>
+        <td id="sysvol">0</td>
+        <td id="syscur">0</td>
+        <td id="sysbat">0</td>
         </tr>
         <tr>
-        <td id="rc2">cell1_2</td>
+        <td id="systxt" style="border-bottom: 1px #000000 solid;">empty</td>
+        <td id="rc2">0</td>
         </tr>
         <tr>
-        <td id="rc3">cell1_3</td>
+        <td id="motorarmed">empty</td>
+        <td id="rc3">0</td>
         </tr>
         <tr>
-        <td id="rc4">cell1_4</td>
+        <td></td>
+        <td id="rc4">0</td>
         </tr>
         <tr>
-        <td id="rc5">cell1_5</td>
+          <td></td>
+          <td id="rc5">0</td>
         </tr>
         <tr>
-        <td id="rc6">cell1_6</td>
+          <td></td>
+          <td id="rc6">0</td>
         </tr>
         <tr>
-        <td id="rc7">cell1_7</td>
+          <td></td>
+          <td id="rc7">0</td>
         </tr>
         <tr>
-        <td id="rc8">cell1_8</td>
+          <td></td>
+          <td id="rc8">0</td>
         </tr>
         </tbody>
         </table>
@@ -74,9 +83,9 @@
                 document.getElementById(channels[i]).innerHTML = data.channels[i]
             }
             //vrf
-            document.getElementById('alt').innerHTML = data.vrf[0]
-            document.getElementById('airspd').innerHTML = data.vrf[1]
-            document.getElementById('gndspd').innerHTML = data.vrf[2]
+            document.getElementById('alt').innerHTML = `${data.vrf[0]} m`
+            document.getElementById('airspd').innerHTML = `${data.vrf[2]} m/s`
+            document.getElementById('gndspd').innerHTML = `${data.vrf[1]} m/s`
             //attitude
             document.getElementById('pitch').innerHTML = data.attitude[0]
             document.getElementById('roll').innerHTML = data.attitude[1]
@@ -86,9 +95,22 @@
             document.getElementById('gpsfix').innerHTML = data.gps[2]
             document.getElementById('gpsat').innerHTML = data.gps[3]
             //sys
-            document.getElementById('sysvol').innerHTML = data.sys[0]
-            document.getElementById('syscur').innerHTML = data.sys[1]
-            document.getElementById('sysbat').innerHTML = data.sys[2]
+            document.getElementById('sysvol').innerHTML = `${data.sys[0] / 1000} V` // V check mavlink_msg_sys_status.h
+            document.getElementById('syscur').innerHTML = `${data.sys[1] / 100} A` // A check mavlink_msg_sys_status.h
+            document.getElementById('sysbat').innerHTML = `${data.sys[2]}%`
+            //heartbeat
+            document.getElementById('systatus').innerHTML = data.hbstatus[0]
+            if(data.hbstatus[1] == 1){
+              document.getElementById('motorarmed').innerHTML = 'Armed'
+            } else if(data.hbstatus[1] == 0){
+              document.getElementById('motorarmed').innerHTML = 'Disarmed'
+            } else {
+              document.getElementById('motorarmed').innerHTML = 'empty'
+            }
+            
+            //status message
+            document.getElementById('systxt').innerHTML = data.statustext
+
         })
     </script>
 </body>

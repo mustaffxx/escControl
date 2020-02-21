@@ -50,12 +50,19 @@ app.get('/', (req, res) => {
         sys = splited[4]
         sys = sys.split(',')
 
+        hbstatus = splited[5]
+        hbstatus = hbstatus.split(',')
+
+        statustext = splited[6]
+
         repackedData = {
             channels,
             vrf,
             attitude,
             gps,
             sys,
+            hbstatus,
+            statustext
         }
         return repackedData
     }
