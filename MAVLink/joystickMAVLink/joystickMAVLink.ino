@@ -38,11 +38,13 @@ mavlink_statustext_t statustext;
 // middleware check if channels varied
 int oldChannels[4] = {0, 0, 0, 0};
 
+bool stateled = 0;
 void setup() {
   _MavLinkSerial.begin(57600);
   Serial.begin(57600);
 
   requestDatastream();
+  digitalWrite(13, LOW); // led bultin to see if code still running
 }
 
 void loop() {
@@ -63,7 +65,9 @@ void loop() {
   readJoystick();
   readMavlink();
   printInfo();
-  delay(1);
+  stateled = !stateled; // led bultin to see if code still running
+  digitalWrite(13, stateled); // led bultin to see if code still running
+  delay(100);
 }
 
 //function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
