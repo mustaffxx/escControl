@@ -1,5 +1,7 @@
 #include <mavlink.h>
 #include <SoftwareSerial.h>
+#include <avr/wdt.h>
+
 SoftwareSerial _MavLinkSerial(9, 10); // PIN 9=Telemetry TX->Pixhawk RX, PIN 10=Telemetry RX->Pixhawk TX
 
 // global
@@ -45,9 +47,12 @@ void setup() {
 
   requestDatastream();
   digitalWrite(13, LOW); // led bultin to see if code still running
+
+  wdt_enable(WDTO_2S); //watchdog init 2 segs
 }
 
 void loop() {
+  wdt_reset(); //watchdog timer conference
   /* for future
     if (Serial.available()) {
     char c = Serial.read();
