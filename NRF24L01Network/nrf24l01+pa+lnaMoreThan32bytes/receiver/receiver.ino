@@ -11,8 +11,8 @@ const byte address[][6] = {"node1", "node2"};
 const int packageLen = 16;
 char msg[packageLen] = "";
 char msgAux[packageLen] = "";
+
 //
-String msgArray[3][14];
 
 void setup() {
   Serial.begin(9600);
@@ -24,45 +24,95 @@ void setup() {
 
   //radio.openWritingPipe(address[0]);
   radio.openReadingPipe(1, address[1]);
-  delay(500);
-
+  radio.startListening();
 }
+
 void loop() {
   delay(5);
-  radio.startListening();
-
-  int index = 0;
   if (radio.available()) {
     //Serial.println("Stop 1");
-    radio.read(&msg, sizeof(msg));
-    for (int i = 0; i < packageLen; i++) {
+    //memset(msg, 0, packageLen); // clear array before store
+
+    radio.read(&msg, packageLen);
+
+    /*
+      memset(msgAux, 0, packageLen);
+      for (int i = 0; i < packageLen; i++) {
       msgAux[i] = msg[i];
-    }
-    msgAux[packageLen] = '\0';
-    Serial.print("Recebido: ");
-    Serial.print(msgAux);
+      Serial.print(msg[i]);
+      }
+    */
+    Serial.print(msg);
     Serial.print(" Size: ");
-    Serial.println(sizeof(msgAux));
-    Serial.println();
+    Serial.println(strlen(msg));
 
     String toComp = "";
-    toComp = String(msgAux[0]) + String(msgAux[1]) + String(msgAux[4]) + String(msgAux[5]);
-    Serial.println(toComp);
+    toComp = String(msg[0]) + String(msg[1]) + String(msg[4]) + String(msg[5]);
+    //Serial.println(toComp);
 
     if (toComp == "tttt") {
-      int howmanyPackages = (String(msgAux[2]) + String(msgAux[3])).toInt();
-      int i = 0;
-      while (1) {
-        radio.read(&msg, sizeof(msg));
-        if (msg[1] == 'i') {
+      Serial.println("I'm here");
+      // to check if received all packages
+      int howmanyPackages = (String(msg[2]) + String(msg[3])).toInt();
+      int howmanyPackagesReceived[howmanyPackages];
+      unsigned int sumNumberPackagesNeeded = 0;
 
-          // in working...
+      char msgArray[howmanyPackages][14];
+
+      for (int i = 0; i < howmanyPackages; i++) {
+        howmanyPackagesReceived[i] = 0; // populate array
+        sumNumberPackagesNeeded += i;
+      }
+
+      //Serial.print("Number of packages: ");
+      //Serial.println(howmanyPackages);
+      while (1) {
+        if (radio.available()) {
+          unsigned int sumNumberPackagesReceived = 0;
+
+          radio.read(&msg, sizeof(msg));
+
+          if ((msg[1] == 'i') || (msg[1] == 'f')) {
+
+            for (int i = 0; i < packageLen - abs(packageLen - int(strlen(msg))); i++) {
+              msgArray[(String(msg[0])).toInt()][i] = msg[i + 2];
+              Serial.print(msg[i]);
+            }
+            Serial.print(" pos: ");
+            Serial.print(packageLen - abs(packageLen - int(strlen(msg))));
+            Serial.println();
+            Serial.print("Received packages: ");
+            Serial.print(sumNumberPackagesReceived);
+            Serial.print(" Packages needed: ");
+            Serial.println(sumNumberPackagesNeeded);
+            Serial.println();
+            Serial.print("howmanyPackagesReceived: ");
+            Serial.println(howmanyPackagesReceived[(String(msg[0])).toInt()]);
+            
+            howmanyPackagesReceived[(String(msg[0])).toInt()] = (String(msg[0])).toInt();
+            
+            if (sumNumberPackagesReceived == sumNumberPackagesNeeded) {
+              Serial.print("Received packages: ");
+              Serial.print(sumNumberPackagesReceived);
+              Serial.print(" Packages needed: ");
+              Serial.println(sumNumberPackagesNeeded);
+              break;
+            }
+            for (int i = 0; i < howmanyPackages; i++) {
+              sumNumberPackagesReceived += howmanyPackagesReceived[i];
+            }
+          }
         }
+      }
+
+      Serial.println("##########");
+      for (int i = 0; i < howmanyPackages; i++) {
+        for (int j = 0; j < packageLen; j++) {
+          Serial.print(msgArray[i][j]);
+          msgArray[i][j] = '0';
+        }
+        Serial.println();
       }
     }
   }
-  msg[0] = '\0';
-  msgAux[0] = '\0';
-  //index = 0;
-  //Serial.println();
 }

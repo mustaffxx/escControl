@@ -25,13 +25,10 @@ void setup() {
 
   radio.openWritingPipe(address[1]);
   radio.openReadingPipe(1, address[0]);
+  radio.stopListening();
 }
 
 void loop() {
-  delay(5);
-  radio.stopListening();
-
-
   String howmanyPackages = "";
   if ((((sizeof(msgC) / packageLen) + 1) < 10)) {
     howmanyPackages = "tt0" + String(((sizeof(msgC) / packageLen) + 1)) + "tt";
@@ -47,6 +44,7 @@ void loop() {
   Serial.print("Size: "); Serial.print(sizeof(msgC)); Serial.print(" ");
   Serial.println(howmanyPackages);
   for (int i = 0; i <= sizeof(msgC); i++) {
+    delay(25);
     if (index < packageLen) {
       msg[index] = msgC[i];
       //Serial.print(msg[index - 2]);
@@ -60,7 +58,7 @@ void loop() {
         radio.write(&msg, sizeof(msg));
         Serial.print(msg);
         Serial.print(" Size: ");
-        Serial.println(sizeof(msg));
+        Serial.println(strlen(msg));
       }
     } else {
       String tochar;
@@ -73,7 +71,7 @@ void loop() {
 
       Serial.print(msg);
       Serial.print(" Size: ");
-      Serial.println(sizeof(msg));
+      Serial.println(strlen(msg));
 
       if (headerIndex < (sizeof(msgC) / packageLen) + 1) {
         headerIndex++;
@@ -111,5 +109,4 @@ void loop() {
   //Serial.print("Size: ");
   //Serial.println(sizeof(msg));
   //Serial.println();
-  delay(500);
 }
