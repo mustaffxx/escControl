@@ -85,12 +85,19 @@ void loop() {
             Serial.print(sumNumberPackagesReceived);
             Serial.print(" Packages needed: ");
             Serial.println(sumNumberPackagesNeeded);
-            Serial.println();
-            Serial.print("howmanyPackagesReceived: ");
-            Serial.println(howmanyPackagesReceived[(String(msg[0])).toInt()]);
-            
+
             howmanyPackagesReceived[(String(msg[0])).toInt()] = (String(msg[0])).toInt();
-            
+            Serial.print("howmanyPackagesReceived: ");
+            //Serial.println(howmanyPackagesReceived[(String(msg[0])).toInt()]);
+
+            for (int i = 0; i < howmanyPackages; i++) {
+              sumNumberPackagesReceived += howmanyPackagesReceived[i];
+              Serial.print(howmanyPackagesReceived[i]);
+              Serial.print(", ");
+            }
+            Serial.println();
+            Serial.println();
+
             if (sumNumberPackagesReceived == sumNumberPackagesNeeded) {
               Serial.print("Received packages: ");
               Serial.print(sumNumberPackagesReceived);
@@ -98,9 +105,8 @@ void loop() {
               Serial.println(sumNumberPackagesNeeded);
               break;
             }
-            for (int i = 0; i < howmanyPackages; i++) {
-              sumNumberPackagesReceived += howmanyPackagesReceived[i];
-            }
+
+
           }
         }
       }
