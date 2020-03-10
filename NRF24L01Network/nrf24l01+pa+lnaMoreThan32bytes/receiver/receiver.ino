@@ -1,7 +1,11 @@
+// this code implement a algorithm to send data greater than 32kbps with nrf24l01+pa+lna
+// only works with 126 max size array
+// todo: increase max size
+
 // arduino micro use 6 CE, 11 CSN
 // arduino uno use 9 CE, 10 CSN
 #include <SPI.h>
-#include <nRF24L01.h>
+//#include <nRF24L01.h>
 #include <RF24.h>
 
 RF24 radio(9, 10); // CE, CSN
@@ -10,7 +14,6 @@ const byte address[][6] = {"node1", "node2"};
 //
 const int packageLen = 16;
 char msg[packageLen] = "";
-char msgAux[packageLen] = "";
 
 //
 
@@ -28,7 +31,6 @@ void setup() {
 }
 
 void loop() {
-  delay(5);
   if (radio.available()) {
     //Serial.println("Stop 1");
     //memset(msg, 0, packageLen); // clear array before store
@@ -42,30 +44,38 @@ void loop() {
       Serial.print(msg[i]);
       }
     */
-    Serial.print(msg);
-    Serial.print(" Size: ");
-    Serial.println(strlen(msg));
+    //    Serial.print(msg);
+    //    Serial.print(" Size: ");
+    //    Serial.println(strlen(msg));
 
     String toComp = "";
     toComp = String(msg[0]) + String(msg[1]) + String(msg[4]) + String(msg[5]);
     //Serial.println(toComp);
 
     if (toComp == "tttt") {
-      Serial.println("I'm here");
+      //      Serial.println("I'm here");
       // to check if received all packages
       int howmanyPackages = (String(msg[2]) + String(msg[3])).toInt();
+      //      Serial.println();
+      //      Serial.println();
+      //      Serial.print(howmanyPackages);
+      //      Serial.println();
+      //      Serial.println();
       int howmanyPackagesReceived[howmanyPackages];
       unsigned int sumNumberPackagesNeeded = 0;
+      unsigned int lastLenMSG[howmanyPackages];
+
 
       char msgArray[howmanyPackages][14];
 
       for (int i = 0; i < howmanyPackages; i++) {
         howmanyPackagesReceived[i] = 0; // populate array
-        sumNumberPackagesNeeded += i;
+        sumNumberPackagesNeeded += i + 1;
       }
 
-      //Serial.print("Number of packages: ");
-      //Serial.println(howmanyPackages);
+      //      Serial.print("Number of packages: ");
+      //      Serial.println(howmanyPackages);
+      //      Serial.println();
       while (1) {
         if (radio.available()) {
           unsigned int sumNumberPackagesReceived = 0;
@@ -73,52 +83,72 @@ void loop() {
           radio.read(&msg, sizeof(msg));
 
           if ((msg[1] == 'i') || (msg[1] == 'f')) {
+            if ((String(msg[0])).toInt() != howmanyPackagesReceived[(String(msg[0])).toInt() - 1]) {
+              if (strlen(msg) == 18) {
+                lastLenMSG[(String(msg[0])).toInt() - 1] = 16;
+              } else {
+                lastLenMSG[(String(msg[0])).toInt() - 1] = packageLen - abs(packageLen - int(strlen(msg)));
+              }
+              //Serial.print(msg[0]); Serial.print(msg[1]);
+              for (int i = 2; i < lastLenMSG[(String(msg[0])).toInt() - 1]; i++) {
+                msgArray[(String(msg[0])).toInt() - 1][i - 2] = msg[i];
+                //Serial.print(msgArray[(String(msg[0])).toInt() - 1][i - 2]);
+                //Serial.print(msg[i]);
+                //msg[i] = '0';
+              }
+              //Serial.println();
+              //              Serial.print(msg);
+              //              Serial.print(" Size: ");
+              //              Serial.println(sizeof(msg));
+              //              Serial.println(lastLenMSG[(String(msg[0])).toInt() - 1]);
+              //              Serial.println(strlen(msg));
 
-            for (int i = 0; i < packageLen - abs(packageLen - int(strlen(msg))); i++) {
-              msgArray[(String(msg[0])).toInt()][i] = msg[i + 2];
-              Serial.print(msg[i]);
+              howmanyPackagesReceived[(String(msg[0])).toInt() - 1] = (String(msg[0])).toInt();
+              //              Serial.print("howmanyPackagesReceived: ");
+              //              Serial.println(howmanyPackagesReceived[(String(msg[0])).toInt() - 1]);
+              //              Serial.println();
+
             }
-            Serial.print(" pos: ");
-            Serial.print(packageLen - abs(packageLen - int(strlen(msg))));
-            Serial.println();
-            Serial.print("Received packages: ");
-            Serial.print(sumNumberPackagesReceived);
-            Serial.print(" Packages needed: ");
-            Serial.println(sumNumberPackagesNeeded);
-
-            howmanyPackagesReceived[(String(msg[0])).toInt()] = (String(msg[0])).toInt();
-            Serial.print("howmanyPackagesReceived: ");
-            //Serial.println(howmanyPackagesReceived[(String(msg[0])).toInt()]);
 
             for (int i = 0; i < howmanyPackages; i++) {
               sumNumberPackagesReceived += howmanyPackagesReceived[i];
-              Serial.print(howmanyPackagesReceived[i]);
-              Serial.print(", ");
+              //                            Serial.print(howmanyPackagesReceived[i]);
+              //                            Serial.print(", ");
             }
-            Serial.println();
-            Serial.println();
+            //                        Serial.println();
+            //            Serial.print("Received packages: ");
+            //            Serial.print(sumNumberPackagesReceived);
+            //            Serial.print(" Packages needed: ");
+            //            Serial.println(sumNumberPackagesNeeded);
+            //            Serial.println();
 
             if (sumNumberPackagesReceived == sumNumberPackagesNeeded) {
-              Serial.print("Received packages: ");
-              Serial.print(sumNumberPackagesReceived);
-              Serial.print(" Packages needed: ");
-              Serial.println(sumNumberPackagesNeeded);
+              //Serial.print("Received packages: ");
+              //Serial.print(sumNumberPackagesReceived);
+              //Serial.print(" Packages needed: ");
+              //Serial.println(sumNumberPackagesNeeded);
+              //Serial.println("break;");
               break;
             }
-
-
           }
         }
       }
 
-      Serial.println("##########");
+      //      Serial.println();
+      //      Serial.println("##########");
+      //msgArray[howmanyPackages][lastLenMSG[howmanyPackages] - 1] = '\0'; // remove weird char in last index when len of msg is not 16
+      Serial.print("Received: ");
       for (int i = 0; i < howmanyPackages; i++) {
-        for (int j = 0; j < packageLen; j++) {
+        for (int j = 0; j < lastLenMSG[i] - 2; j++) {
           Serial.print(msgArray[i][j]);
-          msgArray[i][j] = '0';
+          //          msgArray[i][j] = '0';
         }
-        Serial.println();
+        //        Serial.print(" Size: ");
+        //        Serial.println(lastLenMSG[i]);
       }
+      Serial.println();
+      //msgArray[0][0] = '\0';
+      //memset(msgArray, 0, packageLen);
     }
   }
 }
