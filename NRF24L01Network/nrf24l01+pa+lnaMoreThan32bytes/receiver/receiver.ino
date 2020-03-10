@@ -1,5 +1,6 @@
 // this code implement a algorithm to send data greater than 32kbps with nrf24l01+pa+lna
 // only works with 126 max size array
+// lost a (maybe) relevant number of packages
 // todo: increase max size
 
 // arduino micro use 6 CE, 11 CSN
@@ -11,11 +12,9 @@
 RF24 radio(9, 10); // CE, CSN
 const byte address[][6] = {"node1", "node2"};
 
-//
-const int packageLen = 16;
-char msg[packageLen] = "";
-
-//
+// long message
+char charMyContent[126];
+unsigned int charSize = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -31,6 +30,15 @@ void setup() {
 }
 
 void loop() {
+  readLongMessage(radio, charMyContent, &charSize); //
+  Serial.print("Received: ");
+  Serial.println(charMyContent);
+}
+
+char* readLongMessage(RF24 radio, char charMyContent[], int *charSize) {
+  unsigned int msgLen = 0;
+  const int packageLen = 16;
+  char msg[packageLen] = "";
   if (radio.available()) {
     //Serial.println("Stop 1");
     //memset(msg, 0, packageLen); // clear array before store
@@ -84,10 +92,10 @@ void loop() {
 
           if ((msg[1] == 'i') || (msg[1] == 'f')) {
             if ((String(msg[0])).toInt() != howmanyPackagesReceived[(String(msg[0])).toInt() - 1]) {
-              if (strlen(msg) == 18) {
+              if (strlen(msg) >= 18) {
                 lastLenMSG[(String(msg[0])).toInt() - 1] = 16;
               } else {
-                lastLenMSG[(String(msg[0])).toInt() - 1] = packageLen - abs(packageLen - int(strlen(msg)));
+                lastLenMSG[(String(msg[0])).toInt() - 1] = packageLen - abs(packageLen - int(strlen(msg))); // calculate range of for loop
               }
               //Serial.print(msg[0]); Serial.print(msg[1]);
               for (int i = 2; i < lastLenMSG[(String(msg[0])).toInt() - 1]; i++) {
@@ -137,16 +145,19 @@ void loop() {
       //      Serial.println();
       //      Serial.println("##########");
       //msgArray[howmanyPackages][lastLenMSG[howmanyPackages] - 1] = '\0'; // remove weird char in last index when len of msg is not 16
-      Serial.print("Received: ");
+      String strMsg = "";
+      //      Serial.print("Received: ");
       for (int i = 0; i < howmanyPackages; i++) {
         for (int j = 0; j < lastLenMSG[i] - 2; j++) {
-          Serial.print(msgArray[i][j]);
-          //          msgArray[i][j] = '0';
+          //Serial.print(msgArray[i][j]);
+          strMsg += msgArray[i][j];
+          msgLen += 1;
         }
-        //        Serial.print(" Size: ");
-        //        Serial.println(lastLenMSG[i]);
       }
-      Serial.println();
+      msgLen += 1;
+      strMsg.toCharArray(charMyContent, msgLen);
+      *charSize = msgLen;
+      //Serial.println();
       //msgArray[0][0] = '\0';
       //memset(msgArray, 0, packageLen);
     }
