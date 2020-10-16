@@ -1,2 +1,2 @@
 # escControl
-esc control and calibration with arduino
+Proof of concept of several technologies used in UAVs.
