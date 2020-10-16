@@ -1,2 +1,2 @@
 # escControl
-Proof of concept of several technologies used in UAVs.
+Proof of concept and testing of various technologies used in UAVs.
